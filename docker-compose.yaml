@@ -1,0 +1,33 @@
+version: '3'
+
+services:
+  web:
+    container_name: django_web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+        - /jsonrpc:/app
+        - ${cert}:/certs
+    env_file:
+        - .env
+    command: unicorn your_django_project.wsgi:application --bind 0.0.0.0:8000 --certfile=${cert} --keyfile=${key}
+
+  nginx:
+    image: nginx
+    container_name: nginx
+    ports:
+      - "443:443"
+    volumes:
+      - /path/to/your/tls/certs:/etc/nginx/certs
+      - /path/to/your/nginx/conf:/etc/nginx/conf.d
+    depends_on:
+      - web
+    links:
+      - web
+    environment:
+      - NGINX_TLS_CERT_PATH=${cert}
+      - NGINX_TLS_KEY_PATH=${key}
+    command: nginx -g "daemon off;"
